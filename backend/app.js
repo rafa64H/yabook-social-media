@@ -1,4 +1,6 @@
-const express = require("express");
+import express from "express";
+import "dotenv/config";
+import { connectionData, postgresClient } from "./db/connectDB.js";
 
 const app = express();
 
@@ -10,4 +12,12 @@ app.get("/", async (req, res) => {
 
 app.listen(PORT, () => {
   console.log("Server listening on port", PORT);
+  console.log(connectionData);
+
+  postgresClient
+    .connect()
+    .then(() => {
+      console.log("connected psql");
+    })
+    .catch((error) => console.log(error));
 });

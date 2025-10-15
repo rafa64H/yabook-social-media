@@ -1,6 +1,6 @@
 import express from "express";
 import "dotenv/config";
-import { connectionData, postgresClient } from "./db/connectDB.js";
+import { connectionData, postgresClient } from "./db/connectDB";
 
 const app = express();
 

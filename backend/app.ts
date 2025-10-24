@@ -1,8 +1,10 @@
 import express from "express";
 import "dotenv/config";
-import { connectionData, postgresClient } from "./db/connectDB";
+import { postgresClient } from "./db/connectDB";
+import authRoutes from "./routes/auth.routes";
 
-const app = express();
+export const app = express();
+app.use(express.json());
 
 const PORT = 5000;
 
@@ -10,14 +12,10 @@ app.get("/", async (req, res) => {
   res.send("hola");
 });
 
-app.listen(PORT, () => {
-  console.log("Server listening on port", PORT);
-  console.log(connectionData);
+app.use("/auth", authRoutes);
 
-  postgresClient
-    .connect()
-    .then(() => {
-      console.log("connected psql");
-    })
-    .catch((error) => console.log(error));
+app.listen(PORT, async () => {
+  console.log("Server listening on port", PORT);
+
+  //  const result = await postgresClient.select("*").from("customer");
 });

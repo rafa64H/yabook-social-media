@@ -21,3 +21,6 @@ export const PG_USER = getEnv("PG_USER") as string;
 export const PG_DATABASE = getEnv("PG_DATABASE") as string;
 export const PG_PASSWORD = getEnv("PG_PASSWORD") as string;
 export const PG_PORT = getEnv("PG_PORT") as number;
+
+export const ACCESS_TOKEN_SECRET = getEnv("ACCESS_TOKEN_SECRET") as string;
+export const REFRESH_TOKEN_SECRET = getEnv("REFRESH_TOKEN_SECRET") as string;

@@ -5,6 +5,7 @@
     // File Layout
     "rootDir": "./",
     "outDir": "./dist",
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true
   }
 }

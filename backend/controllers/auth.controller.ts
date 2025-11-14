@@ -4,6 +4,7 @@ import { createUserSchema, loginUserSchema } from "../utils/inputValidation";
 import hashPassword from "../utils/hashPassword";
 import { ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET } from "../constants/env";
 import jwt from "jsonwebtoken";
+import { RequestError } from "../types/types";
 
 export const createUserHandler = async (req: Request, res: Response) => {
   const { email, username, name, password } = req.body;
@@ -12,10 +13,10 @@ export const createUserHandler = async (req: Request, res: Response) => {
   });
 
   if (error) {
-    return res.status(400).json({
-      message: "Validation failed",
-      errors: error.details[0].message,
-    });
+    const validationErrorMessages = error.details.map(
+      (errorDetails) => errorDetails.message
+    );
+    throw new RequestError("Validation failed", 400, validationErrorMessages);
   }
 
   const {
@@ -25,71 +26,41 @@ export const createUserHandler = async (req: Request, res: Response) => {
     password: userDataPassword,
   } = value;
 
-  try {
-    const hashedPassword = await hashPassword(userDataPassword);
+  const hashedPassword = await hashPassword(userDataPassword);
 
-    const [newUser] = await postgresClient("users")
-      .insert({
-        name: userDataName,
-        username: userDataUsername,
-        email: userDataEmail,
-        password: hashedPassword,
-        created_at: new Date(),
-        updated_at: new Date(),
-      })
-      .returning([
-        "id",
-        "username",
-        "email",
-        "name",
-        "created_at",
-        "updated_at",
-      ]);
+  const [newUser] = await postgresClient("users")
+    .insert({
+      name: userDataName,
+      username: userDataUsername,
+      email: userDataEmail,
+      password: hashedPassword,
+      created_at: new Date(),
+      updated_at: new Date(),
+    })
+    .returning(["id", "username", "email", "name", "created_at", "updated_at"]);
 
-    if (!newUser) {
-      throw new Error("Failed to create user name");
-    }
+  const tokenPayload = { id: newUser.id, username: newUser.username };
 
-    const tokenPayload = { id: newUser.id, username: newUser.username };
+  const accessToken = jwt.sign(tokenPayload, ACCESS_TOKEN_SECRET, {
+    expiresIn: "15m",
+  });
 
-    const accessToken = jwt.sign(tokenPayload, ACCESS_TOKEN_SECRET, {
-      expiresIn: "15m",
-    });
+  const refreshToken = jwt.sign(tokenPayload, REFRESH_TOKEN_SECRET, {
+    expiresIn: "7d",
+  });
 
-    const refreshToken = jwt.sign(tokenPayload, REFRESH_TOKEN_SECRET, {
-      expiresIn: "7d",
-    });
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "strict",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
 
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
-
-    return res.status(201).json({
-      message: "User created successfully",
-      user: newUser,
-      accessToken,
-    });
-  } catch (error: any) {
-    console.log(error);
-    if (error.code) {
-      if (error.code === "23505") {
-        let stringToConcatenate = `${
-          error.detail.includes("username") ? "username " : ""
-        }${error.detail.includes("email") ? "email " : ""}`;
-
-        return res
-          .status(400)
-          .json({ message: `${stringToConcatenate}are already in use` });
-      }
-    }
-
-    return res
-      .status(500)
-      .json({ message: "Internal server error during user creation." });
-  }
+  return res.status(201).json({
+    message: "User created successfully",
+    user: newUser,
+    accessToken,
+  });
 };
 
 export const loginUserHandler = async (req: Request, res: Response) => {
@@ -100,10 +71,10 @@ export const loginUserHandler = async (req: Request, res: Response) => {
   });
 
   if (error) {
-    return res.status(400).json({
-      message: "Validation failed",
-      errors: error.details.map((error) => error.message),
-    });
+    const validationErrorMessages = error.details.map(
+      (errorDetails) => errorDetails.message
+    );
+    throw new RequestError("Validation failed", 400, validationErrorMessages);
   }
 
   const userLogin = await postgresClient("users")
@@ -111,7 +82,7 @@ export const loginUserHandler = async (req: Request, res: Response) => {
     .where({ email: emailOrUsername });
 
   if (!userLogin[0]) {
-    return res.status(404).json({ success: false, message: "User not found" });
+    throw new RequestError("User not found", 404);
   }
 
   const tokenPayload = { id: userLogin[0].id, username: userLogin[0].username };

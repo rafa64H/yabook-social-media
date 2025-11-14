@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import { app } from "../app";
 
 describe("Create user account", () => {
-  test.skip("should return status code 201 and return user data", async () => {
+  test("should return status code 201 and return user data", async () => {
     const userData = {
       email: "email@example.com",
       name: "John Doe",
@@ -31,7 +31,7 @@ describe("Create user account", () => {
     expect(response.body.accessToken).toBeDefined();
   });
 
-  test.skip("Should return status code 400 and say username or email is already in use", async () => {
+  test("Should return status code 400 and say username or email is already in use", async () => {
     const userData = {
       email: "email@example.com",
       name: "John Doe",
@@ -76,7 +76,7 @@ describe("Login into account", () => {
     expect(response.body.accessToken).toBeDefined();
   });
 
-  test("Should return status code 400 and return message", async () => {
+  test("Should return status code 400, return a message and return an array of strings telling the validation errors", async () => {
     const loginData = {
       emailOrUsername: 5,
       password: false,
@@ -89,5 +89,7 @@ describe("Login into account", () => {
 
     expect(response.statusCode).toBe(400);
     expect(response.body.message).toBeDefined();
+    expect(response.body.validationErrors).toBeDefined();
+    expect(typeof response.body.validationErrors[0]).toBe("string");
   });
 });

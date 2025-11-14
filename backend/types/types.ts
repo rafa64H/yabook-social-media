@@ -78,13 +78,20 @@ declare module "knex/types/tables" {
   }
 }
 
-class DatabaseError extends Error {
-  public dbErrorCode: string;
-  constructor(message: string, dbErrorCode: string) {
+export class RequestError extends Error {
+  public statusCode: number;
+  validationErrors?: string[];
+  constructor(
+    message: string,
+    statusCode: number,
+    validationErrors?: string[]
+  ) {
     super(message);
 
-    this.name = "DatabaseError";
-    this.dbErrorCode = dbErrorCode;
-    Object.setPrototypeOf(this, DatabaseError.prototype);
+    this.name = "RequestError";
+    this.statusCode = statusCode;
+    if (validationErrors) this.validationErrors = validationErrors;
+
+    Object.setPrototypeOf(this, RequestError.prototype);
   }
 }

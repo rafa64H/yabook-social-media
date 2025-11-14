@@ -30,12 +30,22 @@ const mediaUrlValidation = Joi.string().uri().max(2048).required();
 
 const mediaPathValidation = Joi.string().max(2048).required();
 
+const genericString = Joi.string().required()
+
+
 const createUserSchema = Joi.object({
   name: nameValidation.label("Name"),
   username: usernameValidation.label("Username"),
   email: emailValidation.label("Email"),
   password: passwordValidation.label("Password"),
 });
+
+const loginUserSchema = Joi.object({
+  
+  emailOrUsername: genericString.label('Email or username'),
+  password: genericString.label('password')
+
+})
 
 export {
   idValidation,
@@ -51,4 +61,5 @@ export {
   mediaUrlValidation,
   mediaPathValidation,
   createUserSchema,
+  loginUserSchema
 };

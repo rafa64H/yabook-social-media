@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { postgresClient } from "../db/connectDB";
-import { createUserSchema } from "../utils/inputValidation";
+import { createUserSchema, loginUserSchema } from "../utils/inputValidation";
 import hashPassword from "../utils/hashPassword";
 import { ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET } from "../constants/env";
 import jwt from "jsonwebtoken";
@@ -14,7 +14,7 @@ export const createUserHandler = async (req: Request, res: Response) => {
   if (error) {
     return res.status(400).json({
       message: "Validation failed",
-      errors: error.details.map((d) => d.message),
+      errors: error.details[0].message,
     });
   }
 
@@ -90,4 +90,48 @@ export const createUserHandler = async (req: Request, res: Response) => {
       .status(500)
       .json({ message: "Internal server error during user creation." });
   }
+};
+
+export const loginUserHandler = async (req: Request, res: Response) => {
+  const { emailOrUsername, password } = req.body;
+
+  const { error, value } = loginUserSchema.validate(req.body, {
+    abortEarly: false,
+  });
+
+  if (error) {
+    return res.status(400).json({
+      message: "Validation failed",
+      errors: error.details.map((error) => error.message),
+    });
+  }
+
+  const userLogin = await postgresClient("users")
+    .select("id", "email", "username", "name", "created_at", "updated_at")
+    .where({ email: emailOrUsername });
+
+  if (!userLogin[0]) {
+    return res.status(404).json({ success: false, message: "User not found" });
+  }
+
+  const tokenPayload = { id: userLogin[0].id, username: userLogin[0].username };
+
+  const accessToken = jwt.sign(tokenPayload, ACCESS_TOKEN_SECRET, {
+    expiresIn: "15m",
+  });
+
+  const refreshToken = jwt.sign(tokenPayload, REFRESH_TOKEN_SECRET, {
+    expiresIn: "7d",
+  });
+
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "strict",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+
+  return res
+    .status(200)
+    .json({ success: true, user: userLogin[0], accessToken });
 };

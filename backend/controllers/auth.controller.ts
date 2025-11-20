@@ -106,3 +106,13 @@ export const loginUserHandler = async (req: Request, res: Response) => {
     .status(200)
     .json({ success: true, user: userLogin[0], accessToken });
 };
+
+export const refreshAccessTokenHandler = async (
+  req: Request,
+  res: Response
+) => {
+  const decodedRefreshToken = jwt.verify(
+    req.cookies.refreshToken,
+    REFRESH_TOKEN_SECRET
+  );
+};

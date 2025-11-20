@@ -1,11 +1,13 @@
 import express from "express";
 import "dotenv/config";
-import { postgresClient } from "./db/connectDB";
+import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.routes";
 import errorHandler from "./middleware/errorHandler";
+import usersRoutes from "./routes/users.routes";
 
 export const app = express();
 app.use(express.json());
+app.use(cookieParser());
 
 const PORT = 5000;
 
@@ -14,6 +16,8 @@ app.get("/", async (req, res) => {
 });
 
 app.use("/auth", authRoutes);
+
+app.use("/api/users/", usersRoutes);
 
 app.use(errorHandler);
 

@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { RequestError } from "../types/types";
+import { JsonWebTokenError, TokenExpiredError } from "jsonwebtoken";
 
 export default async function errorHandler(
   error: any,
@@ -34,6 +35,13 @@ export default async function errorHandler(
     return res
       .status(error.statusCode)
       .json({ success: false, message: error.message });
+  }
+
+  if (error instanceof TokenExpiredError) {
+    return res.status(401).json({ success: false, message: "jwt expired" });
+  }
+  if (error instanceof JsonWebTokenError) {
+    return res.status(401).json({ success: false, message: "jwt not valid" });
   }
 
   return res.status(500);

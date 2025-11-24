@@ -38,10 +38,10 @@ export default async function errorHandler(
   }
 
   if (error instanceof TokenExpiredError) {
-    return res.status(401).json({ success: false, message: "jwt expired" });
+    return res.status(401).json({ success: false, message: error.message });
   }
   if (error instanceof JsonWebTokenError) {
-    return res.status(401).json({ success: false, message: "jwt not valid" });
+    return res.status(401).json({ success: false, message: error.message });
   }
 
   return res.status(500);

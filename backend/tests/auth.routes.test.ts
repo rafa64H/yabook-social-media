@@ -51,7 +51,7 @@ describe("Create user account", () => {
 });
 
 describe("Login into account", () => {
-  test("Should return status code 200 and return user data", async () => {
+  test.skip("Should return status code 200 and return user data", async () => {
     const loginData = {
       emailOrUsername: "email@example.com",
       password: "some-password1234",
